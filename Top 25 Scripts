@@ -1,2 +1,160 @@
 # Top 25 DevOps shell scripting interview questions #
 
+************************ Basic Level (1–10) ****************************
+
+1. What is a shell script?
+
+They check: fundamentals
+A shell script is a file containing Linux commands executed by a shell (like bash).
+
+-----
+2. Difference between shell and bash?
+
+They check: clarity of tools
+Shell = general command interpreter
+Bash = specific type of shell (Bourne Again Shell)
+
+-----
+3. What is shebang (#!/bin/bash)?
+
+They check: script execution understanding
+It is the start of Script and Tells system which interpreter to use
+
+-----
+4. How do you execute a shell script?
+
+bash script.sh
+./script.sh (needs execute permission)
+
+-----
+5. Difference between sh and bash?
+
+They check: compatibility awareness
+sh = basic POSIX shell
+bash = extended features (arrays, arithmetic, etc.)
+
+-----
+6. What is the use of chmod +x script.sh?
+Gives execute permission to script
+
+-----
+7. What are environment variables?
+System-wide or session variables like PATH, HOME
+
+-----
+8. Difference between $0, $1, $#?
+
+They check: arguments handling
+$0 → script name
+$1 → first argument
+$# → number of arguments
+
+-----
+9. What is exit status in Linux?
+$? stores last command status
+0 = success, non-zero = failure
+
+-----
+10. What is piping (|)?
+Output of one command becomes input of another
+
+
+********************* Intermediate Level (11–20) ****************
+
+11. Difference between grep, awk, sed?
+
+They check: text processing knowledge
+grep → search
+awk → column-based processing
+sed → stream editing (replace/delete)
+
+-----
+12. How do you debug a shell script?
+bash -x script.sh
+set -x
+
+-----
+13. What is set -e?
+Stops script if any command fails
+
+-----
+14. What is cron?
+Scheduler for running scripts at intervals
+
+-----
+15. How do you pass arguments to a script?
+./script.sh arg1 arg2
+
+-----
+16. What is difference between $* and $@?
+
+They check deep understanding
+$* → all args as single string
+$@ → each argument separately (preferred)
+
+-----
+17. How do you check if a file exists?
+if [ -f file.txt ]; then
+
+-----
+18. What is difference between -eq, -lt, -gt?
+numeric comparisons
+equal, less than, greater than
+
+-----
+19. How do you redirect output?
+> overwrite
+>> append
+2> error output
+
+-----
+20. What is a subshell?
+A child shell process ( )
+
+
+********************  Advanced Level (21–25)  ******************************
+
+21. How do you handle errors in shell scripting?
+
+They check production readiness
+set -euo pipefail
+check $?
+logging + fallback actions
+
+-----
+22. What is trap in shell scripting?
+
+Used for cleanup on exit/signals:
+trap "echo cleanup; exit" SIGINT
+
+-----
+23. How do you make scripts idempotent?
+
+They check DevOps maturity
+Running script multiple times gives same result
+Example: check before creating user/service
+
+-----
+24. How do you schedule scripts in production?
+cron
+systemd timers
+CI/CD pipelines
+
+-----
+25. How do you monitor logs using shell script?
+
+Example:
+tail -f app.log | grep ERROR
+
+-----
+Bonus “Favorite Interview Trick Questions”
+** What happens if a script runs in background?
+Use &
+Process becomes background job
+** Difference between soft link and hard link?
+soft link = shortcut
+hard link = same inode
+** What is $PATH?  => Directories where system searches executables
+** How do you kill a process? => kill -9 PID
+
+
