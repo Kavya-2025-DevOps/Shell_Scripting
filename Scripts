@@ -1,0 +1,513 @@
+# Scripts #
+
+Good instinct—DevOps interviews almost always include some practical shell scripting.
+But don’t just memorize scripts; understand *why* they’re written that way. 
+I’ll give you a handful of realistic, commonly used scripts and 
+explain what they demonstrate so you can talk through them in an interview.
+
+---
+
+## 1. Disk Usage Alert Script
+
+Checks disk usage and sends an alert if it crosses a threshold.
+
+```bash
+#!/bin/bash
+
+THRESHOLD=80
+EMAIL="admin@example.com"
+
+df -h | grep -vE '^Filesystem|tmpfs|cdrom' | awk '{ print $5 " " $1 }' | while read output;
+do
+  usage=$(echo $output | awk '{ print $1 }' | cut -d'%' -f1)
+  partition=$(echo $output | awk '{ print $2 }')
+
+  if [ $usage -ge $THRESHOLD ]; then
+    echo "Warning: Disk usage is at ${usage}% on ${partition}" \
+    | mail -s "Disk Alert" $EMAIL
+  fi
+done
+```
+
+💡 **Interview angle:** monitoring, automation, parsing command output, cron jobs.
+
+---
+
+## 2. Log Cleanup Script
+
+Deletes logs older than X days.
+
+```bash
+#!/bin/bash
+
+LOG_DIR="/var/log/myapp"
+DAYS=7
+
+find $LOG_DIR -type f -name "*.log" -mtime +$DAYS -exec rm -f {} \;
+
+echo "Old logs deleted successfully."
+```
+
+💡 Shows: housekeeping, `find`, safe file handling.
+
+---
+
+## 3. Service Health Check + Restart
+
+Checks if a service is running and restarts it if not.
+
+```bash
+#!/bin/bash
+
+SERVICE="nginx"
+
+if ! systemctl is-active --quiet $SERVICE; then
+  echo "$SERVICE is down. Restarting..."
+  systemctl restart $SERVICE
+  echo "$SERVICE restarted."
+else
+  echo "$SERVICE is running fine."
+fi
+```
+
+💡 Shows: reliability, self-healing systems.
+
+---
+
+## 4. Backup Script
+
+Creates a timestamped backup.
+
+```bash
+#!/bin/bash
+
+SOURCE="/home/user/data"
+BACKUP_DIR="/home/user/backups"
+
+DATE=$(date +%F-%H-%M)
+BACKUP_FILE="$BACKUP_DIR/backup-$DATE.tar.gz"
+
+tar -czf $BACKUP_FILE $SOURCE
+
+echo "Backup created: $BACKUP_FILE"
+```
+
+💡 Shows: automation + safe naming + compression.
+
+---
+
+## 5. CPU & Memory Monitoring
+
+Basic system stats.
+
+```bash
+#!/bin/bash
+
+echo "CPU Load:"
+uptime
+
+echo "Memory Usage:"
+free -h
+```
+
+💡 Simple but often extended in interviews.
+
+---
+
+## 6. Bulk User Creation Script
+
+Reads usernames from a file and creates users.
+
+```bash
+#!/bin/bash
+
+FILE="users.txt"
+
+for user in $(cat $FILE); do
+  useradd $user
+  echo "User $user created."
+done
+```
+
+💡 Shows: loops, file input, system admin basics.
+
+---
+
+## 7. Git Auto Pull Script
+
+Useful in CI/CD or cron jobs.
+
+```bash
+#!/bin/bash
+
+REPO_DIR="/home/user/myrepo"
+
+cd $REPO_DIR || exit
+
+git pull origin main
+
+echo "Repository updated."
+```
+
+💡 Shows: automation in deployment pipelines.
+
+---
+
+## 8. Port Check Script
+
+Checks if a port is open.
+
+```bash
+#!/bin/bash
+
+PORT=8080
+
+if netstat -tuln | grep -q ":$PORT "; then
+  echo "Port $PORT is in use."
+else
+  echo "Port $PORT is free."
+fi
+```
+
+💡 Shows: networking basics.
+
+---
+
+## How to Prepare (Important for Interviews)
+
+Don’t stop at copying these. Be ready to explain:
+
+* Why use `awk`, `sed`, `cut`?
+* Difference between `cron` vs systemd timers
+* How you’d make scripts **idempotent**
+* Error handling (`set -e`, `trap`)
+* Logging best practices
+* Security (permissions, avoiding hardcoded secrets)
+
+---
+
+## Bonus: Make Your Scripts “Interview-Ready”
+
+Add this to impress:
+
+```bash
+set -euo pipefail
+```
+
+And logging:
+
+```bash
+LOG_FILE="/var/log/myscript.log"
+exec >> $LOG_FILE 2>&1
+```
+
+####################################################
+
+
+Got it. I’ll give you a few more *real DevOps-style scripts* and explain them in a way that helps you answer interview questions, not just memorize.
+
+---
+
+# 1. Process Monitoring + Auto Restart (more robust version)
+
+```bash
+#!/bin/bash
+
+PROCESS="apache2"
+
+if pgrep -x "$PROCESS" > /dev/null; then
+    echo "$PROCESS is running"
+else
+    echo "$PROCESS is NOT running. Starting it..."
+    systemctl start $PROCESS
+
+    if pgrep -x "$PROCESS" > /dev/null; then
+        echo "$PROCESS started successfully"
+    else
+        echo "Failed to start $PROCESS"
+    fi
+fi
+```
+
+### 🔍 Explanation
+
+* `pgrep -x` checks if exact process is running
+* If not running → starts service
+* Then verifies again (important in production scripts)
+
+### 💡 Interview points
+
+* How you validate service recovery
+* Why double-check after restart
+* Basic self-healing automation
+
+---
+
+# 2. High CPU Usage Alert Script
+
+```bash
+#!/bin/bash
+
+THRESHOLD=80
+
+echo "Checking CPU usage..."
+
+CPU_USAGE=$(top -bn1 | grep "Cpu(s)" | awk '{print 100 - $8}')
+
+echo "Current CPU Usage: $CPU_USAGE%"
+
+if (( $(echo "$CPU_USAGE > $THRESHOLD" | bc -l) )); then
+    echo "High CPU usage detected: $CPU_USAGE%" 
+else
+    echo "CPU usage is normal"
+fi
+```
+
+### 🔍 Explanation
+
+* `top -bn1` gives CPU snapshot
+* We calculate idle CPU and subtract from 100
+* Uses `bc` for floating-point comparison
+
+### 💡 Interview points
+
+* Parsing system metrics
+* Why shell alone can't handle float math
+* Monitoring logic in DevOps
+
+---
+
+# 3. Simple Deployment Script (CI/CD style)
+
+```bash
+#!/bin/bash
+
+APP_DIR="/var/www/myapp"
+
+echo "Pulling latest code..."
+cd $APP_DIR || exit
+
+git pull origin main
+
+echo "Installing dependencies..."
+npm install
+
+echo "Restarting application..."
+pm2 restart all
+
+echo "Deployment completed successfully"
+```
+
+### 🔍 Explanation
+
+* Automates deployment steps
+* Pull → install → restart
+* Very common in small CI/CD pipelines
+
+### 💡 Interview points
+
+* What happens if `git pull` fails?
+* How to rollback?
+* How CI/CD tools improve this (Jenkins, GitHub Actions)
+
+---
+
+# 4. Log File Error Scanner
+
+```bash
+#!/bin/bash
+
+LOG_FILE="/var/log/app.log"
+
+echo "Scanning logs for errors..."
+
+ERROR_COUNT=$(grep -i "error" $LOG_FILE | wc -l)
+
+echo "Total errors found: $ERROR_COUNT"
+
+if [ $ERROR_COUNT -gt 0 ]; then
+    echo "Recent errors:"
+    grep -i "error" $LOG_FILE | tail -5
+fi
+```
+
+### 🔍 Explanation
+
+* Searches logs for “error”
+* Counts occurrences
+* Shows last 5 errors
+
+### 💡 Interview points
+
+* Log analysis basics
+* Debugging production issues
+* Importance of observability
+
+---
+
+# 5. System Resource Report Script
+
+```bash
+#!/bin/bash
+
+echo "===== SYSTEM REPORT ====="
+
+echo "Date: $(date)"
+echo ""
+
+echo "Uptime:"
+uptime
+
+echo ""
+echo "Disk Usage:"
+df -h
+
+echo ""
+echo "Memory Usage:"
+free -h
+
+echo ""
+echo "Top CPU processes:"
+ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%cpu | head -5
+```
+
+### 🔍 Explanation
+
+* Generates a full system snapshot
+* Combines multiple system commands
+* Useful for health reports
+
+### 💡 Interview points
+
+* Why system reporting is important
+* How monitoring tools (Prometheus, Grafana) replace this
+
+---
+
+# 6. File Backup with Rotation (important concept)
+
+```bash
+#!/bin/bash
+
+SOURCE="/home/user/data"
+BACKUP_DIR="/home/user/backups"
+
+mkdir -p $BACKUP_DIR
+
+tar -czf $BACKUP_DIR/backup-$(date +%F).tar.gz $SOURCE
+
+# Keep only last 5 backups
+cd $BACKUP_DIR || exit
+ls -tp | grep -v '/$' | tail -n +6 | xargs -I {} rm -- {}
+```
+
+### 🔍 Explanation
+
+* Creates daily backup
+* Keeps only last 5 backups (rotation policy)
+
+### 💡 Interview points
+
+* Why log/backup rotation is needed
+* Prevents disk overflow
+* Real production requirement
+
+---
+
+# 7. SSH Connectivity Check Script
+
+```bash
+#!/bin/bash
+
+HOST="192.168.1.10"
+
+ping -c 2 $HOST > /dev/null
+
+if [ $? -eq 0 ]; then
+    echo "Host is reachable"
+else
+    echo "Host is NOT reachable"
+fi
+```
+
+### 🔍 Explanation
+
+* Uses ping to test network connectivity
+* `$?` checks exit status of last command
+
+### 💡 Interview points
+
+* Exit codes in Linux
+* Basic networking troubleshooting
+
+---
+
+# 8. Environment Variable Validator
+
+```bash
+#!/bin/bash
+
+if [ -z "$DB_HOST" ]; then
+    echo "DB_HOST is not set!"
+    exit 1
+fi
+
+echo "DB_HOST is set to $DB_HOST"
+```
+
+### 🔍 Explanation
+
+* Ensures required environment variables exist
+* Prevents runtime failures
+
+### 💡 Interview points
+
+* Importance of environment configs
+* 12-factor app concept
+
+---
+
+# What Interviewers REALLY Look For
+
+When you present scripts like these, don’t just say “this works.”
+
+They want to hear:
+
+### 1. Reliability
+
+* What if command fails?
+* Do you handle errors?
+
+### 2. Observability
+
+* Do you log outputs?
+* Can you debug issues?
+
+### 3. Automation mindset
+
+* What manual task are you replacing?
+
+### 4. Production thinking
+
+* Disk space?
+* Permissions?
+* Security?
+
+---
+
+# If you want next step (recommended)
+
+I can help you with:
+
+* 🔥 Top 25 DevOps shell scripting interview questions
+* 🔥 Real AWS + shell scripting scenarios
+* 🔥 “Explain this script” mock interview practice
+* 🔥 Advanced scripting (arrays, functions, traps, debugging)
+
+Just tell me 👍
+
+
+###########################################
+
+
+
